@@ -1,9 +1,9 @@
 Chirag,80
-Jasjyot,80
-Aarushi,90
-Aadit,70
+Player1,80
+Player2,90
+Player3,70
 HAHAHAHAH,75
-Ishi,85
-Aadit2,70
+Anonym,85
+Anonym234,70
 Csehgal,75
-shikha,45
+Mom,45
