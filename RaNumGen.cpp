@@ -1,18 +1,51 @@
 #include<iostream>
 #include<cstdlib>
+#include <bits/stdc++.h> //log
 #include<time.h> 
 #include<fstream> //for file handling
 #include<string>
 #include<map> //for dictionary
 #include <bits/stdc++.h> 
 #include <unistd.h> //for sleep
+#include <cmath>
 
 using namespace std;
+float N;
+float pause;
+float maxTries;
 
-void addToFile(int score,string name){
+void gameSettings(){
+    //first line -> N ; second line-> pause; third line-> max tries;
+    string num;
+    float arr[3];
+    ifstream file ("RaNumGen_settings.txt");
+    int i=0;
+    while (getline(file, num)){
+        arr[i]=stof(num);
+        i++;   
+    }
+    N=arr[0];
+    pause=arr[1];
+    maxTries=arr[2];
+
+}
+
+void writeSettings(){
+    ofstream file;
+    file.open("RaNumGen.txt",ios::app);
+    string sN=to_string(N)+"\n";
+    string spause=to_string(pause)+"\n";
+    string smaxTries=to_string(maxTries)+"\n";
+    file<<sN;
+    file<<spause;
+    file<<smaxTries;
+    file.close();
+}
+
+void addToFile(int score,string name,int level){
     ofstream file;
     file.open("leaderboard.txt",ios::app);
-    string record=name+','+to_string(score)+"\n";
+    string record=name+','+to_string((score*7)+level)+"\n";
     file<<record;
     file.close();
 }
@@ -52,10 +85,10 @@ string split_p(string str)
 }
 
 bool cmp(pair<string, int>& a, pair<string, int>& b) { 
-    return a.second > b.second; 
+    return (a.second) > (b.second); 
 } 
 
-void sort(map<string, int>& M,float pause) 
+void sort(map<string, int>& M) 
 { //taken from GeeksforGeeks.org
     // Declare vector of pairs 
     vector<pair<string, int> > A; 
@@ -72,22 +105,22 @@ void sort(map<string, int>& M,float pause)
     int i=1;
     const int len=30; //change this for shortening width
     string stars ((len+13-11)/2,'*'); 
-    string underscores(len+14,'_');
+    string underscores(len+24,'_');
     cout<<"\n"<<stars<<"Leaderboard"<<stars<<"\n"<<underscores<<endl;
     string space (len-4,' ');
-    cout<<"|    Name"<<space<<"  Score |"<<endl;
+    cout<<"|    Name"<<space<<"  Score |  Level  |"<<endl;
     for (auto& it : A) { 
         sleep(pause*2);
         int spaces=len-(it.first.length());
         string blank (spaces,'.');
-        cout << "| "<<i<<". "<<it.first <<" "<<blank<<". "<< it.second << "   |"<< endl;
+        cout << "| "<<i<<". "<<it.first <<" "<<blank<<". "<< it.second/7 << "   |    "<<it.second%7<<"    |"<< endl;
         i++; 
     } 
-    string under (len+12,'_');
+    string under (len+22,'_');
     cout<<"|"<<under<<"|\n"<<endl;
 } 
 
-void getLeaderboard(float pause){
+void getLeaderboard(){
     string myText;
     ifstream file("leaderboard.txt");
     int i=0;
@@ -106,27 +139,30 @@ void getLeaderboard(float pause){
         lbrd[name]=stoi(score);
         j++;
         }
-    sort(lbrd,pause);
+    sort(lbrd);
     //displayLeaderboard(lbrd,i);
     return;
 }
 
-void startGame(float pause){
+void startGame(){
     int score=100;
+    int decrement=score/maxTries;
     srand(time(0));
     string name;
     int a = rand();
     int b=rand();
-    int N=100;
     int guess;
-    if (b%2==0){
-        N=10;
+    int n;
+    int level=log10(N);
+    if (b%10>level){
+        b=(b-b%10)/10;
     };
-    a=a%N;
+    n=pow(10,b%10);
+    a=a%n;
     cout<<"Guess a number: ";
     cin>> guess;
     while (guess!=a){
-        score=score-5;
+        score=score-decrement;
         if (guess>a){
             cout<<"The answer is LOWER than "<<guess<<"\n";
         }
@@ -135,10 +171,16 @@ void startGame(float pause){
         }
         cout<<"Guess the number: ";
         cin>>guess;
+        if (score<0){
+            cout<<"\nSorry, you've used up all your turns"<<endl;
+            cout<<"\nThe number was "<<a;
+            return;
+        }
         }
     sleep(pause*2);
-    cout<<"WINNER!!"<<a<<"\n";
+    cout<<"WINNER!!"<<"\n";
     sleep(pause);
+    score=score*abs(level-maxTries/10);
     cout<<"Your score is "<<score<<endl;
     sleep(pause);
     cout<<"\nEnter your name to register your score, enter '1' otherwise\n>>";
@@ -146,11 +188,11 @@ void startGame(float pause){
     if (name=="1"){
         return;
     }
-    addToFile(score,name);
-    getLeaderboard(pause);
+    addToFile(score,name,level);
+    getLeaderboard();
 }
 
-void endScreen(float pause){
+void endScreen(){
     sleep(pause*2);
     cout<<"\n***********Thank you for playing RaNumGen***********\n"<<
      " _____       _   _                  _____            \n"<<
@@ -165,17 +207,67 @@ void endScreen(float pause){
  cout<< "For more projects, visit linktr.ee/Snehgal\n"<<endl;
 }
 
-//under contruction
-void adminSettings(float pause){
+void adminSettings(){
+    int option=0;
+    float perc=100.0;
+    int newLevel=2;
+    int newTries=20;
+    string password;
+    string sure="n";
+    while (true){
     cout<<"***************Settings****************\n"<<
-    "This part is still udner-construction (aka I got tired :'())"<< endl;
-    //to add: Changes in number range (def 1-100), changes in pause timer (def 0.5), clearing leaderboard (password req), adding limit to number of tries(def 20) etc
+    "0. Save and Close"<<endl;
     sleep(pause);
-    cout<<" ";
-    return;
+    cout<<"1. Change pause timer (currently "<<pause<<" seconds)"<<endl;
+    sleep(pause);
+    cout<<"2. Change difficulty (currently at level "<<log10(N)<<" )"<<endl;
+    sleep(pause);
+    cout<<"3. Change maximum tries allowed (currently a maximum of "<<maxTries<<" tries are allowed)"<<endl;
+    sleep(pause);
+    cout<<"4. Clear leaderboard"<<endl;
+    sleep(pause);
+    cout<<"5. Return to default/Cancel"<<endl;
+    cout<<">> ";
+    cin>>option;
+    sleep(pause*2);
+    switch (option){
+        case 0:
+            return;
+        case 1:
+            cout<<"Enter what percentage of the current pause would you like (0-1000%)\n>>";
+            cin>>perc;
+            pause=(perc/100.0)*pause;
+            break;
+        case 2:
+            cout<<"Enter the new level of gameplay(0-10)\n>>";
+            cin>>newLevel;
+            N=pow(10,newLevel);
+            break;
+        case 3:
+            cout<<"Enter new number of maximum tries\n>>";
+            cin>>newTries;
+            maxTries=newTries;
+            break;
+        case 4:
+            cout<<"Enter the password\n>>";
+            cin>>password;
+            if (password=="IconfirmIwanttoDELETEleaderboard"){
+                cout<<"Are you sure you want to delete the leaderboard? (y/n)\n>>";
+                cin>>sure;
+                if (sure=="y"){
+                    ofstream file;
+                    file.open("leaderboard.txt",ios::out);
+                    file.close();}
+            return;
+        case 5:
+            N=100;
+            pause=0.5;
+            maxTries=20;}
+    writeSettings();    }}
+    //to add: Changes in number range (def 1-100), changes in pause timer (def 0.5), clearing leaderboard (password req), adding limit to number of tries(def 20) etc
 }
 
-void gameMenu(float pause){
+void gameMenu(){
     int option=0;
     while (true){
     sleep(pause);
@@ -193,39 +285,39 @@ void gameMenu(float pause){
     cout<<endl;
     switch (option){
     case 0:    
-        endScreen(pause);
+        endScreen();
         return;
     case 1:
         cout<<"*****************Rules******************\n";
         sleep(pause*4);
-        cout<<"> The game will randomly generate a number from 1 to 100."<<endl;
+        cout<<"> The game will randomly generate a number from 1 to "<<N<<"."<<endl;
         sleep(pause*4);
-        cout<<"> The objective is to guess this random number in the minimum number of turns."<<endl;
+        cout<<"> The objective is to guess this random number in the minimum number of turns. You have a maximum of "<<maxTries<<" turns."<<endl;
         sleep(pause*4);
         cout<<"> After each guess, you will get a hint about whether the number is HIGHER or LOWER than your guess."<<endl;
         sleep(pause*4);
         cout<<"> Using these hints, you make another guess and so on until you've guessed the number correctly."<<endl;
         sleep(pause*4);
-        cout<<"> Scoring: You start with 100 points, and each turn you take reduces your total by 5 points."<<endl;
+        cout<<">Your final score is calculated by [((100-triesTaken)xlevel)-maxTries/5]. Currently, you're at level "<<log10(N)<<endl;
         sleep(pause*4);
-        cout<<"> The difficulty of the game can be increased by increasing the number range in the Settings."<<endl;
+        cout<<"> The difficulty of the game can be changed in the Settings."<<endl;
         sleep(pause);
         cout<<"> Enjoy the game!"<<endl;
         break;
     case 2:
-        startGame(pause);
+        startGame();
         break;
     case 3:
-        getLeaderboard(pause);
+        getLeaderboard();
         break;
     case 4:
-        adminSettings(pause);
+        adminSettings();
         break;
     }
     }
 }
 
-void startScreen(float pause){
+void startScreen(){
     cout<<"\n**********Welcome to RaNumGen**********\n";
     sleep(1);
     cout<<
@@ -237,10 +329,10 @@ void startScreen(float pause){
  "|_|  \\_\\__,_|_| \\_|\\__,_|_| |_| |_|\\_____|\\___|_| |_|\n"<<endl;
 
     sleep (2);
-    gameMenu(pause);}
+    gameMenu();}
 
 int main(){
-    float pause = 0.5;
-    startScreen(pause);
+    gameSettings();
+    startScreen();
     return 0;
     }
