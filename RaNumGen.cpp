@@ -1,10 +1,10 @@
-#include<iostream>
-#include<cstdlib>
+#include <iostream>
+#include <cstdlib>
 #include <bits/stdc++.h> //log
-#include<time.h> 
-#include<fstream> //for file handling
-#include<string>
-#include<map> //for dictionary
+#include <time.h> 
+#include <fstream> //for file handling
+#include <string>
+#include <map> //for dictionary
 #include <bits/stdc++.h> 
 #include <unistd.h> //for sleep
 #include <cmath>
